@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mtask/UI/home.dart';
+import 'package:mtask/UI/pomodoro.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 
 void main() {
@@ -75,7 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<Widget> _buildScreens() {
     return [
       const homeScreen(),
-      Container(),
+      const pomodoroScreen(),
       Container(),
       Container(),
       Container(),
