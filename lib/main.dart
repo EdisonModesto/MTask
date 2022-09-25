@@ -1,7 +1,13 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:mtask/UI/addScreen.dart';
 import 'package:mtask/UI/home.dart';
 import 'package:mtask/UI/pomodoro.dart';
+import 'package:mtask/login/loginScreen.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
+
+import 'firebase_options.dart';
 
 void main() {
   runApp(const MyApp());
@@ -38,6 +44,28 @@ class _MyHomePageState extends State<MyHomePage> {
 
   PersistentTabController _controller= PersistentTabController(initialIndex: 0);
 
+  void initFirebase()async{
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    //check auth state
+    FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      if (user == null) {
+        Navigator.push(context, MaterialPageRoute(builder: (context)=>loginScreen()));
+      } else {
+        print('User is signed in!');
+      }
+    });
+  }
+
+
+  @override
+  void initState(){
+    initFirebase();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -72,20 +100,28 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
 
+
+
   //NAV ITEMS SCREENS
   List<Widget> _buildScreens() {
     return [
       const homeScreen(),
       const pomodoroScreen(),
-      Container(),
+      addScreen(),
       Container(),
       Container(),
     ];
   }
 
 
+   printCon(){
+    print("Pressed");
+  }
+
   //NAV ITEM ITEM LISTS
   List<PersistentBottomNavBarItem> _navBarsItems() {
+
+
     return [
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.home),
@@ -107,6 +143,8 @@ class _MyHomePageState extends State<MyHomePage> {
         activeColorPrimary: Color(0xff0890BB),
         activeColorSecondary: Colors.white,
         inactiveColorPrimary: Colors.grey,
+
+        onPressed: printCon(),
       ),
 
       PersistentBottomNavBarItem(
