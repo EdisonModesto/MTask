@@ -1,4 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 import 'package:omni_datetime_picker/omni_datetime_picker.dart';
 
@@ -13,11 +16,27 @@ class addScreen extends StatefulWidget {
 class _addScreenState extends State<addScreen> {
 
   DateTime? dateTime;
+  TextEditingController taskName = TextEditingController();
+  TextEditingController taskDesc = TextEditingController();
+  TextEditingController taskDateTime = TextEditingController();
+  TextEditingController taskPriority = TextEditingController();
 
   @override
   void initState() {
     print("Loaded");
     super.initState();
+  }
+
+  void addTask(String tName, tDesc, tDate, tPriority)async{
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    final User? user = auth.currentUser;
+    final uid = user?.uid;
+    FirebaseFirestore.instance.collection('Users').doc(uid).collection("tasks").doc().set({
+      'Title': tName,
+      'Description': tDesc,
+      'dateTime' : tDate,
+      'Priority' : tPriority
+    });
   }
 
   @override
@@ -49,6 +68,7 @@ class _addScreenState extends State<addScreen> {
                         style: const TextStyle(
                           fontSize: 14
                         ),
+                        controller: taskName,
                         decoration: const InputDecoration(
                           label: Text("Name"),
                           border: OutlineInputBorder(
@@ -68,6 +88,7 @@ class _addScreenState extends State<addScreen> {
                           style: const TextStyle(
                               fontSize: 14
                           ),
+                          controller: taskDesc,
                           decoration: const InputDecoration(
                             label: Text("Description"),
                             border: OutlineInputBorder(
@@ -117,8 +138,17 @@ class _addScreenState extends State<addScreen> {
                                     ),
                                   borderRadius: const Radius.circular(16),
                                 );
-
                                 print(dateTime);
+
+                                //gets minute
+                                var time = dateTime.toString().split(" ");
+                                String forMin = time[1].substring(3,5);
+
+
+                                final DateFormat formatter = DateFormat('yyyy-MMM-dd h:${forMin} a');
+                                final String formatted = formatter.format(dateTime!);
+                                taskDateTime.text = formatted;
+                                print(formatted);
                               },
                               child: const Text(
                                   "Choose Date"
@@ -131,6 +161,7 @@ class _addScreenState extends State<addScreen> {
                                 style: const TextStyle(
                                     fontSize: 14
                                 ),
+                                controller: taskDateTime,
                                 decoration: const InputDecoration(
                                   label: Text("Date"),
                                   border: OutlineInputBorder(
@@ -169,7 +200,9 @@ class _addScreenState extends State<addScreen> {
               Container(
                   height: 55,
                   child: ElevatedButton(
-                    onPressed: (){},
+                    onPressed: (){
+                      addTask(taskName.text, taskDesc.text, taskDateTime.text, taskPriority.text);
+                    },
                     style: ElevatedButton.styleFrom(
                         fixedSize: Size(MediaQuery.of(context).size.width, 50),
                         backgroundColor: const Color(0xff0890BB)

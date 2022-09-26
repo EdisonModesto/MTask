@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -13,6 +14,7 @@ class signupScreen extends StatefulWidget {
 class _signupScreenState extends State<signupScreen> {
   TextEditingController _emailCtrl = TextEditingController();
   TextEditingController _passCtrl = TextEditingController();
+
 
   checkAuth(){
     FirebaseAuth.instance
@@ -97,6 +99,22 @@ class _signupScreenState extends State<signupScreen> {
                                     email: _emailCtrl.text,
                                     password: _passCtrl.text,
                                   );
+                                  final FirebaseAuth auth = FirebaseAuth.instance;
+                                  final User? user = auth.currentUser;
+                                  final uid = user?.uid;
+                                  final users = FirebaseFirestore.instance.collection('Users').doc(uid.toString());
+                                  final json = {
+                                    'email' : _emailCtrl.text,
+                                    'joinedDate' : DateTime.now().toString()
+                                  };
+                                  await users.set(json);
+
+                                  FirebaseFirestore.instance.collection('Users').doc(uid).collection("tasks").doc("").set({
+                                    'userId':'task1'
+                                  });
+
+
+
                                 } on FirebaseAuthException catch (e) {
                                   if (e.code == 'weak-password') {
                                     print('The password provided is too weak.');

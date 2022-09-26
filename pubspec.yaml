@@ -42,6 +42,8 @@ dependencies:
   omni_datetime_picker: ^0.1.2
   cloud_firestore: ^3.4.9
   firebase_auth: ^3.10.0
+  intl: ^0.17.0
+  flutterfire_ui: ^0.4.3+10
 
 dev_dependencies:
   flutter_test:

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +10,9 @@ import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 
 import 'firebase_options.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -44,6 +47,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   PersistentTabController _controller= PersistentTabController(initialIndex: 0);
 
+
   void initFirebase()async{
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -57,12 +61,19 @@ class _MyHomePageState extends State<MyHomePage> {
         print('User is signed in!');
       }
     });
+
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    final User? user = auth.currentUser;
+    final uid = user?.uid;
+    CollectionReference users = FirebaseFirestore.instance.collection('Users');
+    print(users);
   }
 
 
   @override
   void initState(){
     initFirebase();
+
     super.initState();
   }
 
