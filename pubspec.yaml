@@ -44,6 +44,11 @@ dependencies:
   firebase_auth: ^3.10.0
   intl: ^0.17.0
   flutterfire_ui: ^0.4.3+10
+  fluttertoast: ^8.0.9
+  auto_size_text: ^3.0.0
+  custom_timer: ^0.1.2
+  provider: ^6.0.3
+  pomodoro4d: ^0.0.2
 
 dev_dependencies:
   flutter_test:

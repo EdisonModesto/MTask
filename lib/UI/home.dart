@@ -1,8 +1,10 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterfire_ui/firestore.dart';
+import 'package:mtask/dialogs/viewTask.dart';
 
 import '../firebase_options.dart';
 
@@ -16,12 +18,37 @@ class homeScreen extends StatefulWidget {
 class _homeScreenState extends State<homeScreen> {
   
   
-  late var         usersQuery = FirebaseFirestore.instance.collection('Users').doc(FirebaseAuth.instance.currentUser?.uid).collection('tasks').orderBy('Title');
+  late var usersQuery = FirebaseFirestore.instance.collection('Users').doc(FirebaseAuth.instance.currentUser?.uid).collection('tasks').orderBy('Title');
 
   void initFirebase()async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+  }
+
+  void updatePrio(docID, taskDateTime) async{
+
+    var prio = "";
+
+    var parsedDateTime = DateTime.parse(taskDateTime);
+
+    if(parsedDateTime!.difference(DateTime.now()).inDays < 3){
+      prio = "Urgent";
+    } else if(parsedDateTime!.difference(DateTime.now()).inDays < 6){
+      prio = "Normal";
+    } else{
+      prio = "Far";
+    }
+
+    var collection = FirebaseFirestore.instance.collection('Users').doc(FirebaseAuth.instance.currentUser?.uid).collection('tasks');
+    collection.doc(docID) // <-- Doc ID where data should be updated.
+        .update({
+
+        "Priority": prio,
+      }
+    );
+
+    print("updating priority");
   }
 
   @override
@@ -33,7 +60,6 @@ class _homeScreenState extends State<homeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final usersQuery = FirebaseFirestore.instance.collection('Users').doc(FirebaseAuth.instance.currentUser?.uid).collection('tasks').orderBy('Title');
       return SafeArea(
       child: Column(
         children: [
@@ -145,10 +171,17 @@ class _homeScreenState extends State<homeScreen> {
                         itemBuilder: (context, snapshot) {
                           Map<String, dynamic> user = snapshot.data();
 
+                          var dateTimeString = user['dateTime'].toString().split(' ');
+                          var dateString = dateTimeString[0].split("-");
+                          print(dateString);
+
+                          updatePrio(snapshot.id, user['parsedDate']);
                           return Container(
-                            margin: EdgeInsets.only(bottom: 10),
+                            margin: const EdgeInsets.only(bottom: 10),
                             child: ElevatedButton(
-                              onPressed: (){},
+                              onPressed: (){
+                                showDialog(context: context, builder: (context)=>viewTask(title: "${user['Title']}", desc: "${user['Description']}", date: "${user['dateTime']}", priority: "${user["Priority"]}", taskUid: snapshot.id,));
+                              },
                               style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xffE4E4E4),
                                   padding: EdgeInsets.zero,
@@ -163,21 +196,21 @@ class _homeScreenState extends State<homeScreen> {
                                   Container(
                                     width: 75,
                                     height: 75,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xff923939),
+                                    decoration: BoxDecoration(
+                                      color: "${user["Priority"]}" == "Urgent" ? Color(0xff923939) : "${user["Priority"]}" == "Normal" ? Color(0xffC2854B) : Color(0xff259CAC),
                                       borderRadius: BorderRadius.all(Radius.circular(15)),
                                     ),
                                     child: Column(
                                       mainAxisAlignment: MainAxisAlignment.center,
-                                      children: const [
+                                      children: [
                                         Text(
-                                          "08",
+                                          dateString[2],
                                           style: TextStyle(
                                               fontSize: 16
                                           ),
                                         ),
                                         Text(
-                                          "Sept",
+                                          dateString[1],
                                           style: TextStyle(
                                               fontSize: 12
                                           ),
@@ -194,16 +227,18 @@ class _homeScreenState extends State<homeScreen> {
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(
+                                          AutoSizeText(
                                             "${user['Title']}",
-                                            style: TextStyle(
+                                            maxLines: 1,
+                                            minFontSize: 1,
+                                            style: const TextStyle(
                                                 color: Colors.black,
                                                 fontSize: 18
                                             ),
                                           ),
                                           Text(
                                             "${user['dateTime'].toString().substring(11, 19)}",
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                                 color: Colors.black,
                                                 fontSize: 12
                                             ),
