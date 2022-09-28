@@ -15,6 +15,8 @@ class addScreen extends StatefulWidget {
 
 class _addScreenState extends State<addScreen> {
 
+  int urgentInt = 3, normalInt = 6, farInt = 7;
+
   DateTime? dateTime;
   TextEditingController taskName = TextEditingController();
   TextEditingController taskDesc = TextEditingController();
@@ -26,8 +28,20 @@ class _addScreenState extends State<addScreen> {
 
   @override
   void initState() {
-    print("Loaded");
+    readInterval();
     super.initState();
+  }
+
+  void readInterval()async{
+    var collection = FirebaseFirestore.instance.collection('Users').doc(FirebaseAuth.instance.currentUser?.uid);
+    var snapshot = collection.snapshots().forEach((element) {
+      var temp = element.data();
+      setState(() {
+        urgentInt = temp!["urgentInterval"];
+        normalInt = temp!["normalInterval"];
+        farInt = temp!["farInterval"];
+      });
+    });
   }
 
   void addTask(String tName, tDesc, tDate, tPriority)async{
@@ -62,7 +76,7 @@ class _addScreenState extends State<addScreen> {
                 Form(
                   key: _formKey,
                   child: Container(
-                    height: 420,
+                    height: 380,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,7 +84,7 @@ class _addScreenState extends State<addScreen> {
                         const Text(
                           "Add Task",
                           style: TextStyle(
-                              fontSize: 25,
+                              fontSize: 24,
                               fontWeight: FontWeight.bold
                           ),
                         ),
@@ -82,13 +96,14 @@ class _addScreenState extends State<addScreen> {
                               });
                           },
                           style: const TextStyle(
-                            fontSize: 14
+                            fontSize: 12
                           ),
                           controller: taskName,
                             validator: (value){
                               if(value!.isEmpty){return 'Empty name.';}
                             },
                           decoration: const InputDecoration(
+
                             label: Text("Name"),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.all(
@@ -104,12 +119,12 @@ class _addScreenState extends State<addScreen> {
                         ),
                         TextFormField(
                             autovalidateMode:  valid,
-                          maxLines: 3,
+                          maxLines: 2,
                             validator: (value){
                               if(value!.isEmpty){return 'Empty description.';}
                             },
                             style: const TextStyle(
-                                fontSize: 14
+                                fontSize: 12
                             ),
                             controller: taskDesc,
                             decoration: const InputDecoration(
@@ -132,7 +147,7 @@ class _addScreenState extends State<addScreen> {
 
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xff0890BB),
-                                  fixedSize: const Size(double.infinity, 60),
+                                  fixedSize: const Size(double.infinity, 55),
                                   shape: const RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(Radius.circular(8),),
                                   )
@@ -165,9 +180,9 @@ class _addScreenState extends State<addScreen> {
                                   print(dateTime);
 
                                   setState(() {
-                                    if(dateTime!.difference(DateTime.now()).inDays < 3){
+                                    if(dateTime!.difference(DateTime.now()).inDays < urgentInt){
                                       taskPriority.text = "Urgent";
-                                    } else if(dateTime!.difference(DateTime.now()).inDays < 6){
+                                    } else if(dateTime!.difference(DateTime.now()).inDays < normalInt){
                                       taskPriority.text = "Normal";
                                     } else{
                                       taskPriority.text = "Far";
@@ -198,7 +213,7 @@ class _addScreenState extends State<addScreen> {
                                     if(value!.isEmpty){return 'No date specified';}
                                   },
                                   style: const TextStyle(
-                                      fontSize: 14
+                                      fontSize: 12
                                   ),
                                   controller: taskDateTime,
                                   decoration: const InputDecoration(
@@ -217,7 +232,7 @@ class _addScreenState extends State<addScreen> {
                           ],
                         ),
                         Container(
-                          height: 60,
+                          height: 55,
                           width: double.infinity,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.all(Radius.circular(8)),

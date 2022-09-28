@@ -3,10 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:mtask/UI/addScreen.dart';
+import 'package:mtask/UI/analytics.dart';
 import 'package:mtask/UI/home.dart';
 import 'package:mtask/UI/pomodoro.dart';
+import 'package:mtask/UI/settings.dart';
 import 'package:mtask/login/loginScreen.dart';
-import 'package:mtask/providers/pomodoroProvider.dart';
+import 'package:mtask/providers/counter.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 import 'package:provider/provider.dart';
 
@@ -18,7 +20,7 @@ Future<void> main() async {
   runApp(
     MultiProvider(
         providers: [
-          ChangeNotifierProvider(create: (_)=> pomodoroProvider()),
+          ChangeNotifierProvider(create: (_)=> counterProvider()),
         ],
       child: const MyApp()),
     );
@@ -136,8 +138,8 @@ class _MyHomePageState extends State<MyHomePage> {
       const homeScreen(),
       const pomodoroScreen(),
       addScreen(),
-      Container(),
-      Container(),
+      analyticsScreen(),
+      settingScreen(),
     ];
   }
 

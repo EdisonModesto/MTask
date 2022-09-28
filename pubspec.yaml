@@ -49,6 +49,8 @@ dependencies:
   custom_timer: ^0.1.2
   provider: ^6.0.3
   pomodoro4d: ^0.0.2
+  flutter_ringtone_player: ^3.2.0
+  numberpicker: ^2.1.1
 
 dev_dependencies:
   flutter_test:

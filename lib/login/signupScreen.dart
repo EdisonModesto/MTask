@@ -105,7 +105,17 @@ class _signupScreenState extends State<signupScreen> {
                                   final users = FirebaseFirestore.instance.collection('Users').doc(uid.toString());
                                   final json = {
                                     'email' : _emailCtrl.text,
-                                    'joinedDate' : DateTime.now().toString()
+                                    'joinedDate' : DateTime.now().toString(),
+                                    'totalDone' : 0,
+                                    'urgentDone' : 0,
+                                    'normalDone' : 0,
+                                    'farDone' : 0,
+                                    'workMin' : 30,
+                                    'restMin' : 10,
+                                    'urgentInterval' : 3,
+                                    'normalInterval' : 6,
+                                    'farInterval' : 7,
+                                    'mode' : 0
                                   };
                                   await users.set(json);
 

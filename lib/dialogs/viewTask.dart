@@ -19,6 +19,8 @@ class viewTask extends StatefulWidget {
 
 class _viewTaskState extends State<viewTask> {
 
+  int urgentInt = 3, normalInt = 6, farInt = 7;
+
   TextEditingController titleCtrl = TextEditingController();
   TextEditingController descCtrl = TextEditingController();
   TextEditingController dateCtrl = TextEditingController();
@@ -32,7 +34,7 @@ class _viewTaskState extends State<viewTask> {
 
   @override
   void initState() {
-
+    readInterval();
     titleCtrl.text = widget.title;
     descCtrl.text = widget.desc;
     dateCtrl.text = widget.date;
@@ -40,10 +42,21 @@ class _viewTaskState extends State<viewTask> {
     super.initState();
   }
 
+  void readInterval(){
+    var collection = FirebaseFirestore.instance.collection('Users').doc(FirebaseAuth.instance.currentUser?.uid);
+    var snapshot = collection.snapshots().forEach((element) {
+      var temp = element.data();
+      setState(() {
+        urgentInt = temp!["urgentInterval"];
+        normalInt = temp!["normalInterval"];
+        farInt = temp!["farInterval"];
+      });
+    });
+  }
+
   void deleteTask(){
     var collection = FirebaseFirestore.instance.collection('Users').doc(FirebaseAuth.instance.currentUser?.uid).collection('tasks');
-    collection
-        .doc(widget.taskUid) // <-- Doc ID to be deleted.
+    collection.doc(widget.taskUid) // <-- Doc ID to be deleted.
         .delete();
   }
 
@@ -54,6 +67,7 @@ class _viewTaskState extends State<viewTask> {
       "Title": titleCtrl.text,
       "Description": descCtrl.text,
       "dateTime": dateCtrl.text,
+      "parsedDate" : dateTime.toString(),
       "Priority": prio,
       }
     );
@@ -246,16 +260,14 @@ class _viewTaskState extends State<viewTask> {
                         );
 
                         setState(() {
-                          if(dateTime!.difference(DateTime.now()).inDays < 3){
+                          if(dateTime!.difference(DateTime.now()).inDays < urgentInt){
                             prio = "Urgent";
-                          } else if(dateTime!.difference(DateTime.now()).inDays < 6){
+                          } else if(dateTime!.difference(DateTime.now()).inDays < normalInt){
                             prio = "Normal";
                           } else{
                             prio = "Far";
                           }
                         });
-
-
 
                         //gets minute
                         var time = dateTime.toString().split(" ");
@@ -301,13 +313,34 @@ class _viewTaskState extends State<viewTask> {
                       ),
                     ),
                     TextButton(
-                      onPressed: (){
+                      onPressed: () async {
                         if (_formKey.currentState!.validate()) {
                           if(isEditing){
                             updateTask();
                           }else{
-                            deleteTask();
-                            Navigator.pop(context);
+
+                            var userCol = FirebaseFirestore.instance.collection('Users');
+                            userCol
+                                .doc(FirebaseAuth.instance.currentUser?.uid) // <-- Doc ID where data should be updated.
+                                .update({'totalDone': FieldValue.increment(1)});
+
+                            var taskCol = FirebaseFirestore.instance.collection('Users').doc(FirebaseAuth.instance.currentUser?.uid).collection('tasks').doc(widget.taskUid);
+                               await taskCol.snapshots().forEach((element) {
+                                print("DONEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+                                var temp = element.data();
+                                print(temp!["Priority"]);
+
+                                if(temp!["Priority"] == "Urgent"){
+                                  userCol.doc(FirebaseAuth.instance.currentUser?.uid).update({'urgentDone': FieldValue.increment(1)});
+                                } else if(temp!["Priority"] == "Normal"){
+                                  userCol.doc(FirebaseAuth.instance.currentUser?.uid).update({'normalDone': FieldValue.increment(1)});
+                                } else{
+                                  userCol.doc(FirebaseAuth.instance.currentUser?.uid).update({'farDone': FieldValue.increment(1)});
+                                }
+                                deleteTask();
+                                Navigator.pop(context);
+
+                              });
                           }
                         }
 

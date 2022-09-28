@@ -5,6 +5,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterfire_ui/firestore.dart';
 import 'package:mtask/dialogs/viewTask.dart';
+import 'package:mtask/providers/counter.dart';
+import 'package:provider/provider.dart';
 
 import '../firebase_options.dart';
 
@@ -18,7 +20,9 @@ class homeScreen extends StatefulWidget {
 class _homeScreenState extends State<homeScreen> {
   
   
-  late var usersQuery = FirebaseFirestore.instance.collection('Users').doc(FirebaseAuth.instance.currentUser?.uid).collection('tasks').orderBy('Title');
+  late var usersQuery = FirebaseFirestore.instance.collection('Users').doc(FirebaseAuth.instance.currentUser?.uid).collection('tasks').orderBy('parsedDate');
+  int totalTasks = 0, urgentTotal = 0, normalTotal = 0, farTotal = 0;
+  int urgentInt = 3, normalInt = 6, farInt = 7;
 
   void initFirebase()async {
     await Firebase.initializeApp(
@@ -26,35 +30,147 @@ class _homeScreenState extends State<homeScreen> {
     );
   }
 
-  void updatePrio(docID, taskDateTime) async{
+ void updateCounters() {
+    //loops through every task is collection
+   usersQuery.snapshots().forEach((element) {
+      print("USER:");
+      print(element.docs.length);
+      //SETS TOTAL COUNTER TO THE LENGTH
+      setState((){
+        totalTasks = element.docs.length;
+      });
 
-    var prio = "";
+      //LOOPS TRHOUGH EVERY TASK AND CHECK PRIORITY AND ADD THEM TO PRIORITY COUNTER
+      element.docs.forEach((element1) {
+        var taskData = element1.data();
+        print(element1.data()["Priority"]);
+        if(taskData["Priority"].toString() == "Urgent"){
+          setState(() {
+            urgentTotal = urgentTotal + 1;
+          });
+        } else if(taskData["Priority"].toString() == "Normal"){
+          setState(() {
+            normalTotal = normalTotal + 1;
+          });
+        } else{
+          setState(() {
+            farTotal = farTotal + 1;
+          });
+        }
+      });
+    });
+    /*
+    num = await usersQuery.snapshots().length.whenComplete(() => {
+      print("USER:"),
+      print(num.toString()),
+    });*/
 
-    var parsedDateTime = DateTime.parse(taskDateTime);
 
-    if(parsedDateTime!.difference(DateTime.now()).inDays < 3){
-      prio = "Urgent";
-    } else if(parsedDateTime!.difference(DateTime.now()).inDays < 6){
-      prio = "Normal";
-    } else{
-      prio = "Far";
-    }
 
-    var collection = FirebaseFirestore.instance.collection('Users').doc(FirebaseAuth.instance.currentUser?.uid).collection('tasks');
-    collection.doc(docID) // <-- Doc ID where data should be updated.
-        .update({
 
-        "Priority": prio,
-      }
+  }
+
+  void updatePrio()  {
+
+    var docID;
+    var taskDateTime;
+
+    var snap = FirebaseFirestore.instance.collection('Users').doc(FirebaseAuth.instance.currentUser?.uid).collection('tasks');
+
+    usersQuery.get().then(
+          (res) {
+            res.docs.forEach((element) {
+              docID = element.id;
+              taskDateTime = element["parsedDate"];
+              print("TASKDATE TIME");
+              print(taskDateTime);
+
+              var prio = "";
+
+              var parsedDateTime = DateTime.parse(taskDateTime);
+
+              if(parsedDateTime!.difference(DateTime.now()).inDays < urgentInt){
+                prio = "Urgent";
+              } else if(parsedDateTime!.difference(DateTime.now()).inDays < normalInt){
+                prio = "Normal";
+              } else{
+                prio = "Far";
+              }
+
+              var collection = FirebaseFirestore.instance.collection('Users').doc(FirebaseAuth.instance.currentUser?.uid).collection('tasks');
+              collection.doc(docID) // <-- Doc ID where data should be updated.
+                  .update({
+
+                "Priority": prio,
+              }
+              );
+            });
+          },
+      onError: (e) => print("Error completing: $e"),
     );
+/*
+    usersQuery.snapshots().forEach((element) {
+      element.docs.forEach((element1) {
+         docID = element1.id;
+         taskDateTime = element1["parsedDate"];
 
-    print("updating priority");
+         print("TASKDATE TIME");
+         print(taskDateTime);
+
+         var prio = "";
+
+         var parsedDateTime = DateTime.parse(taskDateTime);
+
+         if(parsedDateTime!.difference(DateTime.now()).inDays < urgentInt){
+           prio = "Urgent";
+         } else if(parsedDateTime!.difference(DateTime.now()).inDays < normalInt){
+           prio = "Normal";
+         } else{
+           prio = "Far";
+         }
+
+         var collection = FirebaseFirestore.instance.collection('Users').doc(FirebaseAuth.instance.currentUser?.uid).collection('tasks');
+         collection.doc(docID) // <-- Doc ID where data should be updated.
+             .update({
+
+           "Priority": prio,
+         }
+         );
+
+
+      });
+    }); */
+
+  //  print("updating priority");
+  }
+
+  void readInterval(){
+    print("ERROR");
+
+
+    var collection = FirebaseFirestore.instance.collection('Users').doc(FirebaseAuth.instance.currentUser?.uid);
+    var get = collection.get().then(
+          (DocumentSnapshot doc) {
+           final data = doc.data() as Map<String, dynamic>;
+            print(data["normalDone"]);
+           setState(() {
+             urgentInt = data!["urgentInterval"];
+             normalInt = data!["normalInterval"];
+             farInt = data!["farInterval"];
+           });
+        // ...
+      },
+      onError: (e) => print("Error getting document: $e"),
+    );
   }
 
   @override
   void initState() {
 
     initFirebase();
+    readInterval();
+    updatePrio();
+    updateCounters();
     super.initState();
   }
 
@@ -71,17 +187,17 @@ class _homeScreenState extends State<homeScreen> {
             child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
                     Text(
-                      "3 Tasks",
-                      style: TextStyle(
+                      "${totalTasks} Tasks",
+                      style: const TextStyle(
                         fontSize: 25,
                         fontWeight: FontWeight.bold,
                         color: Colors.white
                       ),
 
                     ),
-                    Text(
+                    const Text(
                       "Recommended by MTask",
                       style: TextStyle(
                           fontSize: 12,
@@ -108,9 +224,9 @@ class _homeScreenState extends State<homeScreen> {
                     fixedSize: const Size(75, 75),
                     backgroundColor: const Color(0xff923939)
                   ),
-                  child: const Text(
-                    "1",
-                    style: TextStyle(
+                  child: Text(
+                    "${urgentTotal}",
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 20
                     ),
@@ -122,9 +238,9 @@ class _homeScreenState extends State<homeScreen> {
                       fixedSize: const Size(75, 75),
                       backgroundColor: const Color(0xffC2854B)
                   ),
-                  child: const Text(
-                    "1",
-                    style: TextStyle(
+                  child:  Text(
+                    "${normalTotal}",
+                    style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 20
                     ),
@@ -136,9 +252,9 @@ class _homeScreenState extends State<homeScreen> {
                       fixedSize: const Size(75, 75),
                       backgroundColor: const Color(0xff259CAC)
                   ),
-                  child: const Text(
-                    "1",
-                    style: TextStyle(
+                  child: Text(
+                    "${farTotal}",
+                    style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 20
                     ),
@@ -173,9 +289,8 @@ class _homeScreenState extends State<homeScreen> {
 
                           var dateTimeString = user['dateTime'].toString().split(' ');
                           var dateString = dateTimeString[0].split("-");
-                          print(dateString);
-
-                          updatePrio(snapshot.id, user['parsedDate']);
+                       //   print(dateString);
+                         // updatePrio(snapshot.id, user['parsedDate']);
                           return Container(
                             margin: const EdgeInsets.only(bottom: 10),
                             child: ElevatedButton(
@@ -197,21 +312,21 @@ class _homeScreenState extends State<homeScreen> {
                                     width: 75,
                                     height: 75,
                                     decoration: BoxDecoration(
-                                      color: "${user["Priority"]}" == "Urgent" ? Color(0xff923939) : "${user["Priority"]}" == "Normal" ? Color(0xffC2854B) : Color(0xff259CAC),
-                                      borderRadius: BorderRadius.all(Radius.circular(15)),
+                                      color: "${user["Priority"]}" == "Urgent" ? const Color(0xff923939) : "${user["Priority"]}" == "Normal" ? const Color(0xffC2854B) : const Color(0xff259CAC),
+                                      borderRadius: const BorderRadius.all(Radius.circular(15)),
                                     ),
                                     child: Column(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         Text(
                                           dateString[2],
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                               fontSize: 16
                                           ),
                                         ),
                                         Text(
                                           dateString[1],
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                               fontSize: 12
                                           ),
                                         )
@@ -233,11 +348,11 @@ class _homeScreenState extends State<homeScreen> {
                                             minFontSize: 1,
                                             style: const TextStyle(
                                                 color: Colors.black,
-                                                fontSize: 18
+                                                fontSize: 16
                                             ),
                                           ),
                                           Text(
-                                            "${user['dateTime'].toString().substring(11, 19)}",
+                                            user['dateTime'].toString().split(" ")[1] + " " + user['dateTime'].toString().split(" ")[2],
                                             style: const TextStyle(
                                                 color: Colors.black,
                                                 fontSize: 12

@@ -1,10 +1,12 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:custom_timer/custom_timer.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:liquid_progress_indicator/liquid_progress_indicator.dart';
-import 'package:mtask/UI/timer.dart';
-import 'package:mtask/providers/pomodoroProvider.dart';
+import 'package:mtask/providers/counter.dart';
 import 'package:provider/provider.dart';
 
 class pomodoroScreen extends StatefulWidget {
@@ -16,6 +18,7 @@ class pomodoroScreen extends StatefulWidget {
 
 class _pomodoroScreenState extends State<pomodoroScreen> {
 
+  int work = 30, rest = 10;
   var setMin;
   bool isWork = true;
 
@@ -25,13 +28,33 @@ class _pomodoroScreenState extends State<pomodoroScreen> {
 
   @override
   void initState() {
-    setMin = myDuration.inMilliseconds;
+    readInterval();
+    setMin = work;
+    resetTimer();
     print(setMin);
     super.initState();
   }
 
+  void readInterval(){
+    print("ERROR");
+
+
+    var collection = FirebaseFirestore.instance.collection('Users').doc(FirebaseAuth.instance.currentUser?.uid);
+    var get = collection.get().then(
+          (DocumentSnapshot doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        setState(() {
+          work = data!["workMin"];
+          rest = data!["restMin"];
+        });
+        // ...
+      },
+      onError: (e) => print("Error getting document: $e"),
+    );
+  }
+
   void startTimer() {
-    countdownTimer = Timer.periodic(Duration(milliseconds: 100), (_) => setCountDown());
+    countdownTimer = Timer.periodic(const Duration(milliseconds: 100), (_) => setCountDown());
   }
 
   void stopTimer() {
@@ -40,7 +63,7 @@ class _pomodoroScreenState extends State<pomodoroScreen> {
   // Step 5
   void resetTimer() {
     stopTimer();
-    setState(() => myDuration = Duration(days: 5));
+    setState(() => myDuration = isWork? Duration(minutes: work) : Duration(minutes: rest));
   }
   // Step 6
   void setCountDown() {
@@ -52,6 +75,78 @@ class _pomodoroScreenState extends State<pomodoroScreen> {
       print("------------------");
       if (seconds < 0) {
         countdownTimer!.cancel();
+        FlutterRingtonePlayer.play(
+          android: AndroidSounds.notification,
+          ios: IosSounds.glass,
+          looping: true, // Android only - API >= 28
+          volume: 1.0, // Android only - API >= 28
+          asAlarm: true, // Android only - all APIs
+        );
+        showDialog(context: context, builder: (context){
+          return Center(
+            child: Card(
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(15)),
+              ),
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.8,
+                height: 300,
+                padding: const EdgeInsets.only(left: 25, right: 25, top: 20, bottom: 20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Session Done!",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold
+                      ),
+                    ),
+                    Container(
+                      width: 125,
+                      height: 125,
+                      color: Colors.grey,
+                    ),
+                    Text(
+                      "Would you like to start the\nnext session?",
+                      textAlign: TextAlign.center,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: (){
+                            FlutterRingtonePlayer.stop();
+                            Navigator.pop(context);
+                          },
+                          child: Text("No"),
+                        ),
+                        TextButton(
+                          onPressed: (){
+                            if(isWork){
+                              setState(() {
+                                isWork = false;
+                              });
+                            } else{
+                              setState(() {
+                                isWork = true;
+                              });
+                            }
+                            resetTimer();
+                            startTimer();
+                            FlutterRingtonePlayer.stop();
+                            Navigator.pop(context);
+                          },
+                          child: Text("Yes"),
+                        )
+                      ],
+                    )
+                  ],
+                ),
+              ),
+            ),
+          );
+        });
       } else {
         myDuration = Duration(milliseconds: seconds);
       }
@@ -91,7 +186,67 @@ class _pomodoroScreenState extends State<pomodoroScreen> {
                     ),
                   ),
                   IconButton(
-                    onPressed: (){},
+                    onPressed: (){
+                      showDialog(context: context, builder: (context){
+                        return Center(
+                          child: Card(
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(15)),
+                            ),
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                borderRadius: BorderRadius.all(Radius.circular(15)),
+                              ),
+                              width: MediaQuery.of(context).size.width * 0.8,
+                              height: 225,
+                              padding: const EdgeInsets.only(left: 25, right: 25, top: 20, bottom: 20),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "Select Preset"
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: (){},
+                                    child: Text(
+                                        "Custom"
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      fixedSize: Size(MediaQuery.of(context).size.width, 40),
+                                      elevation: 0,
+                                      backgroundColor: Color(0xff0890BB)
+                                    ),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: (){},
+                                    child: Text(
+                                      "45:15"
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                        fixedSize: Size(MediaQuery.of(context).size.width, 40),
+                                        elevation: 0,
+                                        backgroundColor: Color(0xff0890BB)
+                                    ),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: (){},
+                                    child: Text(
+                                        "35:10"
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                        fixedSize: Size(MediaQuery.of(context).size.width, 40),
+                                        elevation: 0,
+                                        backgroundColor: Color(0xff0890BB)
+                                    ),
+                                  )
+
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      });
+                    },
                     icon: const Icon(Icons.settings, color: Colors.black38,),
                   )
                 ],
@@ -113,7 +268,7 @@ class _pomodoroScreenState extends State<pomodoroScreen> {
                           direction: Axis.vertical,
                           center: Text(
                               '$hours:$minutes:$seconds',
-                              style: TextStyle(fontSize: 18)
+                              style: const TextStyle(fontSize: 18)
                           ),// The direction the liquid moves (Axis.vertical = bottom to top, Axis.horizontal = left to right). Defaults to Axis.vertical.
                         ),
 
@@ -136,21 +291,24 @@ class _pomodoroScreenState extends State<pomodoroScreen> {
                               onPressed: (){
                                 setState(() {
                                   isWork = true;
-                                  myDuration = Duration(minutes: 30);
+                                  myDuration = Duration(minutes: work);
                                   setMin = myDuration.inMilliseconds;
                                 });
                               },
                               style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: Color(0xff414141), width: 1),
+                                backgroundColor: isWork? const Color(0xff0890BB): Colors.white,
+                                side: BorderSide(
+                                    color: isWork? const Color(0xff0890BB): const Color(0xff414141),
+                                    width: 1),
                                 shape: const RoundedRectangleBorder(
                                   borderRadius: BorderRadius.all(Radius.circular(18)),
                                 ),
                                 fixedSize: const Size(100, 30),
                               ),
-                              child: const Text(
+                              child: Text(
                                 "Work",
                                 style: TextStyle(
-                                    color: Color(0xff414141)
+                                    color: isWork? Colors.white : const Color(0xff414141)
                                 ),
                               ),
                             ),
@@ -158,21 +316,22 @@ class _pomodoroScreenState extends State<pomodoroScreen> {
                               onPressed: (){
                                 setState(() {
                                   isWork = false;
-                                  myDuration = Duration(minutes: 1);
+                                  myDuration = Duration(minutes: rest);
                                   setMin = myDuration.inMilliseconds;
                                 });
                               },
                               style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Color(0xff414141), width: 1),
+                                  backgroundColor: !isWork? const Color(0xff0890BB): Colors.white,
+                                  side: BorderSide(color: !isWork? const Color(0xff0890BB): const Color(0xff414141), width: 1),
                                   shape: const RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(Radius.circular(18)),
                                   ),
                                   fixedSize: const Size(100, 30)
                               ),
-                              child: const Text(
+                              child: Text(
                                 "Rest",
                                 style: TextStyle(
-                                    color: Color(0xff414141)
+                                    color: !isWork? Colors.white : const Color(0xff414141)
                                 ),
                               ),
                             ),
