@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterfire_ui/firestore.dart';
+import 'package:mtask/dialogs/prioDialog.dart';
 import 'package:mtask/dialogs/viewTask.dart';
 import 'package:mtask/providers/counter.dart';
 import 'package:provider/provider.dart';
@@ -31,8 +32,15 @@ class _homeScreenState extends State<homeScreen> {
   }
 
  void updateCounters() {
+
     //loops through every task is collection
    usersQuery.snapshots().forEach((element) {
+     setState(() {
+       urgentTotal = 0;
+       normalTotal = 0;
+       farTotal = 0;
+       print("COUNTERS RESET");
+     });
       print("USER:");
       print(element.docs.length);
       //SETS TOTAL COUNTER TO THE LENGTH
@@ -76,7 +84,6 @@ class _homeScreenState extends State<homeScreen> {
     var taskDateTime;
 
     var snap = FirebaseFirestore.instance.collection('Users').doc(FirebaseAuth.instance.currentUser?.uid).collection('tasks');
-
     usersQuery.get().then(
           (res) {
             res.docs.forEach((element) {
@@ -93,6 +100,7 @@ class _homeScreenState extends State<homeScreen> {
                 prio = "Urgent";
               } else if(parsedDateTime!.difference(DateTime.now()).inDays < normalInt){
                 prio = "Normal";
+
               } else{
                 prio = "Far";
               }
@@ -108,40 +116,15 @@ class _homeScreenState extends State<homeScreen> {
           },
       onError: (e) => print("Error completing: $e"),
     );
-/*
-    usersQuery.snapshots().forEach((element) {
-      element.docs.forEach((element1) {
-         docID = element1.id;
-         taskDateTime = element1["parsedDate"];
-
-         print("TASKDATE TIME");
-         print(taskDateTime);
-
-         var prio = "";
-
-         var parsedDateTime = DateTime.parse(taskDateTime);
-
-         if(parsedDateTime!.difference(DateTime.now()).inDays < urgentInt){
-           prio = "Urgent";
-         } else if(parsedDateTime!.difference(DateTime.now()).inDays < normalInt){
-           prio = "Normal";
-         } else{
-           prio = "Far";
-         }
-
-         var collection = FirebaseFirestore.instance.collection('Users').doc(FirebaseAuth.instance.currentUser?.uid).collection('tasks');
-         collection.doc(docID) // <-- Doc ID where data should be updated.
-             .update({
-
-           "Priority": prio,
-         }
-         );
 
 
-      });
-    }); */
+    setState(() {
+      urgentTotal = 0;
+      normalTotal = 0;
+      farTotal = 0;
+    });
+    updateCounters();
 
-  //  print("updating priority");
   }
 
   void readInterval(){
@@ -170,7 +153,7 @@ class _homeScreenState extends State<homeScreen> {
     initFirebase();
     readInterval();
     updatePrio();
-    updateCounters();
+    //updateCounters();
     super.initState();
   }
 
@@ -219,7 +202,16 @@ class _homeScreenState extends State<homeScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 ElevatedButton(
-                  onPressed: (){},
+                  onPressed: (){
+                    showDialog(context: context, builder: (context){
+                      return prioDialog(
+                        color: Color(0xff923939),
+                        title: "Urgent Priority",
+                        subtitle: "All tasks under the urgent priority are close to the deadline! Theses tasks must be finished ASAP!",
+
+                      );
+                    });
+                  },
                   style: ElevatedButton.styleFrom(
                     fixedSize: const Size(75, 75),
                     backgroundColor: const Color(0xff923939)
@@ -233,7 +225,16 @@ class _homeScreenState extends State<homeScreen> {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: (){},
+                  onPressed: (){
+                    showDialog(context: context, builder: (context){
+                      return prioDialog(
+                        color: Color(0xffC2854B),
+                        title: "Normal Priority",
+                        subtitle: "All tasks under the normal priority are considered to be the ideal time to do your tasks! Doing tasks this early will benefit you in the long run!",
+
+                      );
+                    });
+                  },
                   style: ElevatedButton.styleFrom(
                       fixedSize: const Size(75, 75),
                       backgroundColor: const Color(0xffC2854B)
@@ -247,7 +248,16 @@ class _homeScreenState extends State<homeScreen> {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: (){},
+                  onPressed: (){
+                    showDialog(context: context, builder: (context){
+                      return prioDialog(
+                        color: Color(0xff259CAC),
+                        title: "Far Priority",
+                        subtitle: "Tasks under the far priority are tasks that has a far deadline. This indicates that you sill have time to relax.",
+
+                      );
+                    });
+                  },
                   style: ElevatedButton.styleFrom(
                       fixedSize: const Size(75, 75),
                       backgroundColor: const Color(0xff259CAC)

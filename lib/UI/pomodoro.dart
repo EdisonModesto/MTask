@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:liquid_progress_indicator/liquid_progress_indicator.dart';
+import 'package:mtask/dialogs/webDialog.dart';
 import 'package:mtask/providers/counter.dart';
 import 'package:provider/provider.dart';
 
@@ -17,6 +18,9 @@ class pomodoroScreen extends StatefulWidget {
 }
 
 class _pomodoroScreenState extends State<pomodoroScreen> {
+
+  bool isPreset = false;
+  int workPreset = 0, restPreset = 0;
 
   int work = 30, rest = 10;
   var setMin;
@@ -63,7 +67,16 @@ class _pomodoroScreenState extends State<pomodoroScreen> {
   // Step 5
   void resetTimer() {
     stopTimer();
-    setState(() => myDuration = isWork? Duration(minutes: work) : Duration(minutes: rest));
+    setState(() {
+      myDuration =
+      isWork ? (isPreset ? Duration(minutes: workPreset) : Duration(
+          minutes: work)) : (isPreset
+          ? Duration(minutes: restPreset)
+          : Duration(minutes: rest));
+      setMin = myDuration.inMilliseconds;
+      }
+    );
+
   }
   // Step 6
   void setCountDown() {
@@ -175,7 +188,11 @@ class _pomodoroScreenState extends State<pomodoroScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
-                    onPressed: (){},
+                    onPressed: (){
+                      showDialog(context: context, builder: (context){
+                        return webViewDialog(url: "https://devtastic.tech/blogposts/pomodoro",);
+                      });
+                    },
                     icon: const Icon(Icons.info, color: Colors.black38),
                   ),
                   const Text(
@@ -207,7 +224,13 @@ class _pomodoroScreenState extends State<pomodoroScreen> {
                                     "Select Preset"
                                   ),
                                   ElevatedButton(
-                                    onPressed: (){},
+                                    onPressed: (){
+                                      setState(() {
+                                        isPreset = false;
+                                      });
+                                      resetTimer();
+                                      Navigator.pop(context);
+                                    },
                                     child: Text(
                                         "Custom"
                                     ),
@@ -218,7 +241,15 @@ class _pomodoroScreenState extends State<pomodoroScreen> {
                                     ),
                                   ),
                                   ElevatedButton(
-                                    onPressed: (){},
+                                    onPressed: (){
+                                      setState(() {
+                                        isPreset = true;
+                                        workPreset = 45;
+                                        restPreset = 15;
+                                      });
+                                      resetTimer();
+                                      Navigator.pop(context);
+                                    },
                                     child: Text(
                                       "45:15"
                                     ),
@@ -229,7 +260,15 @@ class _pomodoroScreenState extends State<pomodoroScreen> {
                                     ),
                                   ),
                                   ElevatedButton(
-                                    onPressed: (){},
+                                    onPressed: (){
+                                      setState(() {
+                                        workPreset = 35;
+                                        restPreset = 10;
+                                        isPreset = true;
+                                      });
+                                      resetTimer();
+                                      Navigator.pop(context);
+                                    },
                                     child: Text(
                                         "35:10"
                                     ),
@@ -291,7 +330,7 @@ class _pomodoroScreenState extends State<pomodoroScreen> {
                               onPressed: (){
                                 setState(() {
                                   isWork = true;
-                                  myDuration = Duration(minutes: work);
+                                  myDuration = isPreset? Duration(minutes: workPreset) : Duration(minutes: work);
                                   setMin = myDuration.inMilliseconds;
                                 });
                               },
@@ -316,7 +355,7 @@ class _pomodoroScreenState extends State<pomodoroScreen> {
                               onPressed: (){
                                 setState(() {
                                   isWork = false;
-                                  myDuration = Duration(minutes: rest);
+                                  myDuration = isPreset? Duration(minutes: restPreset) : Duration(minutes: rest);
                                   setMin = myDuration.inMilliseconds;
                                 });
                               },
