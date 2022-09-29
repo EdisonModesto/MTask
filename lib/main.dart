@@ -113,7 +113,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin{
       if(status == AnimationStatus.completed){
         _controllerLottie.reset();
         Navigator.pop(context);
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const navigatorScreen()),);
+        Navigator.push(context, MaterialPageRoute(builder: (context) => isOnboard? navigatorScreen() : OnboardScreen()),);
 
       }
     });
@@ -147,8 +147,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin{
 
                   });
                 }
-
-
             ),
           ),
         ),
