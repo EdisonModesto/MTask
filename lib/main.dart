@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lottie/lottie.dart';
 import 'package:mtask/UI/addScreen.dart';
 import 'package:mtask/UI/analytics.dart';
 import 'package:mtask/UI/home.dart';
@@ -66,9 +67,10 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin{
 
   PersistentTabController _controller= PersistentTabController(initialIndex: 0);
+  late final AnimationController _controllerLottie;
   bool isOnboard = false;
 
   void getPrefs()async{
@@ -106,12 +108,53 @@ class _MyHomePageState extends State<MyHomePage> {
     getPrefs();
     initFirebase();
 
+    _controllerLottie = AnimationController(vsync: this);
+    _controllerLottie.addStatusListener((status) {
+      if(status == AnimationStatus.completed){
+        _controllerLottie.reset();
+        Navigator.pop(context);
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const navigatorScreen()),);
+
+      }
+    });
+
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
 
-    return isOnboard? navigatorScreen() : OnboardScreen();
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: Container(
+            width: 300,
+            height: 300,
+            child: Lottie.asset(
+              "assets/lottie/mtask.json",
+
+                repeat: false,
+                controller: _controllerLottie,
+                onLoaded: (composition){
+                  _controllerLottie.duration = composition.duration;
+                  _controllerLottie.forward().whenComplete(() => (){
+
+                  });
+                }
+
+
+            ),
+          ),
+        ),
+      ),
+    );
+
+    //isOnboard? navigatorScreen() : OnboardScreen();
   }
 }
