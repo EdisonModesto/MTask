@@ -6,12 +6,15 @@ import 'package:flutter/services.dart';
 import 'package:mtask/UI/addScreen.dart';
 import 'package:mtask/UI/analytics.dart';
 import 'package:mtask/UI/home.dart';
+import 'package:mtask/UI/navigator.dart';
 import 'package:mtask/UI/pomodoro.dart';
 import 'package:mtask/UI/settings.dart';
 import 'package:mtask/login/loginScreen.dart';
+import 'package:mtask/onboarding/onboarding.dart';
 import 'package:mtask/providers/counter.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'firebase_options.dart';
 
@@ -23,7 +26,7 @@ Future<void> main() async {
         providers: [
           ChangeNotifierProvider(create: (_)=> counterProvider()),
         ],
-      child: const MyApp()),
+      child: const  MyApp()),
     );
 }
 
@@ -42,13 +45,13 @@ class MyApp extends StatelessWidget {
         }
       },
       child: MaterialApp(
-        title: 'Flutter Demo',
+        title: 'MTask',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           fontFamily: 'Poppins',
           primarySwatch: Colors.blue,
         ),
-        home: const MyHomePage(title: 'Flutter Demo Home Page'),
+        home: const MyHomePage(title: 'MTask'),
       ),
     );
   }
@@ -66,9 +69,17 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
 
   PersistentTabController _controller= PersistentTabController(initialIndex: 0);
+  bool isOnboard = false;
 
+  void getPrefs()async{
+    final prefs = await SharedPreferences.getInstance();
+    setState((){
+      isOnboard = prefs.getBool('isOnboard')!;
+    });
+  }
 
   void initFirebase()async{
+    getPrefs();
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
@@ -92,6 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState(){
+    getPrefs();
     initFirebase();
 
     super.initState();
@@ -100,103 +112,6 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-        statusBarColor: Color(0xff0890BB)
-      ),
-      child: PersistentTabView(
-        context,
-        controller: _controller,
-        screens: _buildScreens(),
-        items: _navBarsItems(),
-        confineInSafeArea: true,
-        backgroundColor: Colors.white, // Default is Colors.white.
-        handleAndroidBackButtonPress: true, // Default is true.
-        resizeToAvoidBottomInset: true, // This needs to be true if you want to move up the screen when keyboard appears. Default is true.
-        stateManagement: false, // Default is true.
-        hideNavigationBarWhenKeyboardShows: true, // Recommended to set 'resizeToAvoidBottomInset' as true while using this argument. Default is true.
-        decoration: NavBarDecoration(
-          borderRadius: BorderRadius.circular(10.0),
-          colorBehindNavBar: Colors.white,
-        ),
-        popAllScreensOnTapOfSelectedTab: true,
-        popActionScreens: PopActionScreensType.all,
-        itemAnimationProperties: const ItemAnimationProperties( // Navigation Bar's items animation properties.
-          duration: Duration(milliseconds: 200),
-          curve: Curves.ease,
-        ),
-        screenTransitionAnimation: const ScreenTransitionAnimation( // Screen transition animation on change of selected tab.
-          animateTabTransition: true,
-          curve: Curves.ease,
-          duration: Duration(milliseconds: 200),
-        ),
-        navBarStyle: NavBarStyle.style16, // Choose the nav bar style with this property.
-      ),
-    );
+    return isOnboard? navigatorScreen() : OnboardScreen();
   }
-
-
-
-
-  //NAV ITEMS SCREENS
-  List<Widget> _buildScreens() {
-    return [
-      const homeScreen(),
-      const pomodoroScreen(),
-      addScreen(),
-      analyticsScreen(),
-      settingScreen(),
-    ];
-  }
-
-
-   printCon(){
-    print("Pressed");
-  }
-
-  //NAV ITEM ITEM LISTS
-  List<PersistentBottomNavBarItem> _navBarsItems() {
-
-
-    return [
-      PersistentBottomNavBarItem(
-        icon: const Icon(Icons.home),
-        title: ("Home"),
-        activeColorPrimary: Colors.blue,
-        inactiveColorPrimary: Colors.grey,
-      ),
-
-      PersistentBottomNavBarItem(
-        icon: const Icon(Icons.timer),
-        title: ("Pomodoro"),
-        activeColorPrimary: Colors.blue,
-        inactiveColorPrimary: Colors.grey,
-      ),
-
-      PersistentBottomNavBarItem(
-        icon: const Icon(Icons.add),
-        title: ("Add"),
-        activeColorPrimary: Color(0xff0890BB),
-        activeColorSecondary: Colors.white,
-        inactiveColorPrimary: Colors.grey,
-
-        onPressed: printCon(),
-      ),
-
-      PersistentBottomNavBarItem(
-        icon: const Icon(Icons.bar_chart),
-        title: ("Analytics"),
-        activeColorPrimary: Colors.blue,
-        inactiveColorPrimary: Colors.grey,
-      ),
-
-      PersistentBottomNavBarItem(
-        icon: const Icon(Icons.settings),
-        title: ("Settings"),
-        activeColorPrimary: Colors.blue,
-        inactiveColorPrimary: Colors.grey,
-      ),
-    ];
-  }
-
 }

@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:liquid_progress_indicator/liquid_progress_indicator.dart';
+import 'package:lottie/lottie.dart';
 import 'package:mtask/dialogs/webDialog.dart';
 import 'package:mtask/providers/counter.dart';
 import 'package:provider/provider.dart';
@@ -17,7 +18,7 @@ class pomodoroScreen extends StatefulWidget {
   State<pomodoroScreen> createState() => _pomodoroScreenState();
 }
 
-class _pomodoroScreenState extends State<pomodoroScreen> {
+class _pomodoroScreenState extends State<pomodoroScreen> with TickerProviderStateMixin{
 
   bool isPreset = false;
   int workPreset = 0, restPreset = 0;
@@ -104,6 +105,10 @@ class _pomodoroScreenState extends State<pomodoroScreen> {
               child: Container(
                 width: MediaQuery.of(context).size.width * 0.8,
                 height: 300,
+                decoration: BoxDecoration(
+                  color: Color(0xffDADADA),
+                  borderRadius: BorderRadius.all(Radius.circular(15)),
+                ),
                 padding: const EdgeInsets.only(left: 25, right: 25, top: 20, bottom: 20),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -118,7 +123,9 @@ class _pomodoroScreenState extends State<pomodoroScreen> {
                     Container(
                       width: 125,
                       height: 125,
-                      color: Colors.grey,
+                      child: Lottie.asset(
+                        "assets/lottie/done.json"
+                      ),
                     ),
                     Text(
                       "Would you like to start the\nnext session?",

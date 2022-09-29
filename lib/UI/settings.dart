@@ -203,6 +203,40 @@ class _settingScreenState extends State<settingScreen> {
                                   ),
                                 ),
                               ),
+                              Card(
+                                shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.all(Radius.circular(15))
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.only(top: 10, bottom: 10, left: 20, right: 20),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xffE4E4E4),
+                                    borderRadius: BorderRadius.all(Radius.circular(15)),
+                                  ),
+
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text("Logout of Account"),
+                                      ElevatedButton(
+                                        onPressed: () async {
+                                          await FirebaseAuth.instance.signOut();
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                            backgroundColor: Color(0xff0890BB),
+                                            elevation: 0,
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.all(Radius.circular(20))
+                                            )
+                                        ),
+                                        child: const Text(
+                                            "Logout"
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
